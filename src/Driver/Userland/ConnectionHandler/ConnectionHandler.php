@@ -203,7 +203,15 @@ final class ConnectionHandler implements ConnectionHandlerInterface
                 fwrite($this->requests[$requestId]['stdin'], $content);
             } else {
                 // Returns the status code
-                return $this->dispatchRequest($requestId);
+                if (extension_loaded('newrelic')) {
+                    newrelic_end_transaction();
+                    newrelic_start_transaction(ini_get("newrelic.appname"));
+                }
+                $result = $this->dispatchRequest($requestId);
+                if (extension_loaded('newrelic')) {
+                    newrelic_end_transaction();
+                }
+                return $result;
             }
         } elseif (DaemonInterface::FCGI_ABORT_REQUEST === $record['type']) {
             $this->endRequest($requestId);
